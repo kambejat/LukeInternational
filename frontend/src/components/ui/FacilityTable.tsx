@@ -57,7 +57,7 @@ const FacilityTable: React.FC = () => {
             const updatedFacility = { ...facilityToArchive, is_archived: !facilityToArchive.is_archived };
     
             // Update the facility on the server
-            await axios.put(`api/v2/facilities/${id}/`, updatedFacility);
+            await axios.patch(`api/v2/facilities/${id}/`, updatedFacility);
     
             // Refresh facilities after archiving
             fetchFacilities();
