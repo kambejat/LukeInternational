@@ -1,27 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import axios from 'axios';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import useAuth from '../context/useAuth';
 
-const FacilityTable = () => {
-    const [facilities, setFacilities] = useState([]);
-    const [filteredFacilities, setFilteredFacilities] = useState([]);
-    const [searchQuery, setSearchQuery] = useState('');
+interface Facility {
+    id: number;
+    facility_name: string;
+    district_id: number;
+    owner_id: number;
+}
 
+const FacilityTable: React.FC = () => {
+    const [facilities, setFacilities] = useState<Facility[]>([]);
+    const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([]);
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [user, token] = useAuth();
     useEffect(() => {
         fetchFacilities();
     }, []);
 
     const fetchFacilities = async () => {
         try {
-            const response = await axios.get('api/v2/facilities/');
-            setFacilities(response.data);
-            setFilteredFacilities(response.data);
+            const response = await axios.get<Facility[]>('api/v2/facilities/');
+            const facilitiesWithIds = response.data.map((facility, index) => ({
+                ...facility,
+                id: index + 1, // Generate a unique id for each facility
+            }));
+            setFacilities(facilitiesWithIds);
+            setFilteredFacilities(facilitiesWithIds);
         } catch (error) {
             console.error('Error fetching facilities:', error);
         }
     };
+    
 
-    const handleSearch = (e) => {
+    const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;
         setSearchQuery(query);
         const filtered = facilities.filter((facility) =>
@@ -30,7 +43,7 @@ const FacilityTable = () => {
         setFilteredFacilities(filtered);
     };
 
-    const handleArchive = async (id) => {
+    const handleArchive = async (id: number) => {
         try {
             await axios.put(`api/v2/facilities/${id}/archive`);
             // Refresh facilities after archiving
@@ -40,7 +53,7 @@ const FacilityTable = () => {
         }
     };
 
-    const columns = [
+    const columns: GridColDef[] = [
         { field: 'facility_name', headerName: 'Facility Name', flex: 1 },
         { field: 'district_id', headerName: 'District ID', flex: 1 },
         { field: 'owner_id', headerName: 'Owner ID', flex: 1 },
@@ -56,8 +69,13 @@ const FacilityTable = () => {
 
     return (
         <div style={{ height: 400, width: '100%' }}>
-            <input type="text" value={searchQuery} onChange={handleSearch} placeholder="Search by facility name" />
-            <DataGrid rows={filteredFacilities} columns={columns} pageSize={5} />
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+                placeholder="Search by facility name"
+            />
+            <DataGrid rows={filteredFacilities} columns={columns}  />
         </div>
     );
 };
