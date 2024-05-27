@@ -8,6 +8,7 @@ interface Facility {
     facility_name: string;
     district_id: number;
     owner_id: number;
+    is_archived: boolean;
 }
 
 const FacilityTable: React.FC = () => {
@@ -45,13 +46,26 @@ const FacilityTable: React.FC = () => {
 
     const handleArchive = async (id: number) => {
         try {
-            await axios.put(`api/v2/facilities/${id}/archive`);
+            // Find the facility to be archived
+            const facilityToArchive = facilities.find(facility => facility.id === id);
+            if (!facilityToArchive) {
+                console.error('Facility not found');
+                return;
+            }
+    
+            // Toggle the archive status
+            const updatedFacility = { ...facilityToArchive, is_archived: !facilityToArchive.is_archived };
+    
+            // Update the facility on the server
+            await axios.put(`api/v2/facilities/${id}/`, updatedFacility);
+    
             // Refresh facilities after archiving
             fetchFacilities();
         } catch (error) {
             console.error('Error archiving facility:', error);
         }
     };
+    
 
     const columns: GridColDef[] = [
         { field: 'facility_name', headerName: 'Facility Name', flex: 1 },
